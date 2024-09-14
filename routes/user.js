@@ -1,16 +1,61 @@
 import { Router } from "express";
 import { User } from "../database/User.js";
+import { compare, hash } from "bcrypt";
+import jwt from "jsonwebtoken";
+import { tokenVerify } from "../middleware.js";
 const user = Router();
 
-user.post("/sigin", async (req, res) => {
-    const novo = req.body;
+user.post("/login", async (req, res) => {
+    const { email, senha } = req.body;
 
     try {
-        const novoUser = await User.create(novo);
-        return res.status(201).json({result: novoUser});
+        const user = await User.findOne({email: email});
+        if (!user) return res.status(400).json({result: "e-mail não cadastrado"});
+
+        const isMatch = await compare(senha, user.senha);
+        if (!isMatch) 
+            return res.status(400).json({result: "e-mail ou senha incorretos"});
+
+        const token = jwt.sign({ id: user._id }, process.env.SECRET, { expiresIn: 300 });
+        return res.status(200).json({result: {token: token, expiresIn: 300}});
     } catch (error) {
         console.log(error);
-        return res.status(400).json({ msg: "error, talvez a falta de dados" })
+        return res.status(400).json({result: {error: true, time: Date.now()}});
+    }
+});
+
+user.post("/sigin", async (req, res) => {
+    const body = req.body;
+
+    try {
+        if (User.findOne({email: body.email})) 
+            return res.status(400).json({ result: "E-mail já em uso" });
+        const novoUser = await User.create({
+            email: body.email,
+            senha: await hash(body.senha, 10),
+            nome: body.nome,
+            curso: body.curso,
+            pontos: body.pontos,
+            urlImg: body.urlImg
+        });
+        return res.status(201).json({ result: novoUser });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ result: {error: true, time: Date.now()} });
+    }
+});
+
+// rotas privatas abaixo
+
+user.get("/", tokenVerify, async (req, res) => {
+    const { id } = req.query;
+
+    try {
+        const dataMyAccount = await User.findOne({ _id: id });
+        return res.status(200).json({ result: dataMyAccount });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ result: {error: true, time: Date.now()} });
     }
 })
 
