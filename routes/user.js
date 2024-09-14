@@ -29,7 +29,7 @@ user.post("/sigin", async (req, res) => {
 
     try {
         let emailExists = await User.findOne({email: body.email});
-        if (emailExists.email != undefined) 
+        if (emailExists) 
             return res.status(400).json({ result: "E-mail já em uso" });
         const novoUser = await User.create({
             email: body.email,
