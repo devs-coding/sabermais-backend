@@ -1,3 +1,4 @@
+import { hash } from "bcrypt";
 import { model, Schema } from "mongoose";
 
 const userSchema = new Schema({
@@ -16,6 +17,15 @@ const userSchema = new Schema({
     curso: String,
     pontos: Number,
     urlImg: String
+});
+
+userSchema.pre("save", async function (next) {
+    
+    if (this.isModified("senha")) {
+        this.senha = await hash(this.senha, 10);
+    }
+
+    next();
 });
 
 const User = model("User", userSchema);

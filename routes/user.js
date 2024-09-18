@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { User } from "../database/User.js";
-import { compare, hash } from "bcrypt";
+import { compare } from "bcrypt";
 import jwt from "jsonwebtoken";
 import { tokenVerify } from "../middleware.js";
 const user = Router();
@@ -29,16 +29,10 @@ user.post("/sigin", async (req, res) => {
 
     try {
         let emailExists = await User.findOne({email: body.email});
-        if (emailExists) 
+        if (emailExists)
             return res.status(400).json({ result: "E-mail já em uso" });
-        const novoUser = await User.create({
-            email: body.email,
-            senha: await hash(body.senha, 10),
-            nome: body.nome,
-            curso: body.curso,
-            pontos: body.pontos,
-            urlImg: body.urlImg
-        });
+
+        const novoUser = await User.create(body);
         return res.status(201).json({ result: novoUser });
     } catch (error) {
         console.log(error);
@@ -59,5 +53,18 @@ user.get("/", tokenVerify, async (req, res) => {
         return res.status(400).json({ result: {error: true, time: Date.now()} });
     }
 })
+
+/**
+ * Criar uma pergunta (ROTA)
+ * header: {
+ *  authentication: token
+ * }
+ * body:
+ *  pergunta: 
+ *      titulo,
+ *      pontos,
+ *      respostas,
+ *      
+ */
 
 export { user };
