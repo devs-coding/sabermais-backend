@@ -2,6 +2,7 @@ import { connect } from "mongoose";
 import express, { json } from "express";
 import { config } from "dotenv";
 import { user } from "./routes/user.js";
+import { pergunta } from "./routes/pergunta.js";
 config();
 
 const app = express();
@@ -12,6 +13,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/user", user);
+app.use("/pergunta", pergunta);
 
 // conexão banco de dados
 const URL_DB = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.ho8q2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
