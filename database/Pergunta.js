@@ -1,4 +1,5 @@
 import { model, Schema, Types } from "mongoose";
+import { respostaSchema } from "./Resposta";
 
 const perguntaSchema = new Schema({
     titulo: {
@@ -11,6 +12,7 @@ const perguntaSchema = new Schema({
         required: [true, "é necessário um autor"]
     },
     pontos: Number,
+    respostas: [ respostaSchema ],
     date: Date
 });
 

@@ -1,6 +1,7 @@
 import { json, Router } from "express";
 import { Pergunta } from "../database/Pergunta.js";
 import { tokenVerify } from "../middleware.js";
+import { respostaSchema } from "../database/Resposta.js";
 const pergunta = Router();
 
 // public routes
@@ -98,6 +99,57 @@ pergunta.put('/:id', tokenVerify, async (req, res) => {
 
         return res.status(200).json({ result: perguntaAtualizada });
     } catch (error) {
+        console.log(error);
+        return res.status(400).json({ result: {error: error.message, time: Date.now()} });
+    }
+});
+
+// Criar respostas
+pergunta.post("/:id_pergunta/resposta", async (req, res) => {
+    const { id_pergunta } = req.params;
+    const { resposta } = req.params;
+
+    try {
+        const pergunta = await Pergunta.findById(id_pergunta);
+        const novaResposta = pergunta.respostas.create(resposta);
+
+        return res.status(200).json({ result: novaResposta });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ result: {error: error.message, time: Date.now()} });
+    }
+
+});
+
+// Editar respostas
+pergunta.put("/:id_pergunta/resposta/:id", async (req, res) => {
+    const { id_pergunta, id } = req.params;
+    const { resposta, explicacao, comentarios } = req.body;
+
+    try {
+        const pergunta = await Pergunta.findById(id_pergunta);
+        const repostaAtualizada = await pergunta.respostas
+            .find({ _id: id })
+            .updateOne({ resposta, explicacao, comentarios });
+
+        return res.status(200).json({ result: repostaAtualizada });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ result: {error: error.message, time: Date.now()} });
+    }
+})
+
+// Delete respostas
+pergunta.delete("/:id_pergunta/resposta/:id", async (req, res) => {
+    const { id_pergunta, id } = req.params;
+
+    try {
+        const pergunta = await Pergunta.findById(id_pergunta);
+        const resposta = await pergunta.respostas.find({ _id: id }).deleteOne();
+        
+        return res.status(200).json({ result: resposta });
+    } catch (error) {
+        console.log(error);
         return res.status(400).json({ result: {error: error.message, time: Date.now()} });
     }
 });
