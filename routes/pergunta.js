@@ -1,4 +1,4 @@
-import { json, Router } from "express";
+import { Router } from "express";
 import { Pergunta } from "../database/Pergunta.js";
 import { tokenVerify } from "../middleware.js";
 import { respostaSchema } from "../database/Resposta.js";
@@ -105,13 +105,17 @@ pergunta.put('/:id', tokenVerify, async (req, res) => {
 });
 
 // Criar respostas
-pergunta.post("/:id_pergunta/resposta", async (req, res) => {
+pergunta.post("/:id_pergunta/resposta", tokenVerify, async (req, res) => {
     const { id_pergunta } = req.params;
-    const { resposta } = req.params;
+    const { resposta, explicacao, autor } = req.body;
 
     try {
-        const pergunta = await Pergunta.findById(id_pergunta);
-        const novaResposta = pergunta.respostas.create(resposta);
+        const novaResposta = await Pergunta.findByIdAndUpdate(
+            id_pergunta,
+            {
+                $push: { respostas: { resposta, explicacao, autor } }
+            }
+        );
 
         return res.status(200).json({ result: novaResposta });
     } catch (error) {
@@ -122,16 +126,21 @@ pergunta.post("/:id_pergunta/resposta", async (req, res) => {
 });
 
 // Editar respostas
-pergunta.put("/:id_pergunta/resposta/:id", async (req, res) => {
+pergunta.put("/:id_pergunta/resposta/:id", tokenVerify, async (req, res) => {
     const { id_pergunta, id } = req.params;
-    const { resposta, explicacao, comentarios } = req.body;
+    const { resposta, explicacao } = req.body;
+
+    // verificar se o usuário é o dono da resposta
 
     try {
         const pergunta = await Pergunta.findById(id_pergunta);
-        const repostaAtualizada = await pergunta.respostas
-            .find({ _id: id })
-            .updateOne({ resposta, explicacao, comentarios });
-
+        const repostaAtualizada = pergunta.respostas.id(id).$set({
+            ...pergunta.respostas.id(id),
+            resposta,
+            explicacao
+        });
+        
+        await pergunta.save();
         return res.status(200).json({ result: repostaAtualizada });
     } catch (error) {
         console.log(error);
@@ -140,14 +149,17 @@ pergunta.put("/:id_pergunta/resposta/:id", async (req, res) => {
 })
 
 // Delete respostas
-pergunta.delete("/:id_pergunta/resposta/:id", async (req, res) => {
+pergunta.delete("/:id_pergunta/resposta/:id", tokenVerify, async (req, res) => {
     const { id_pergunta, id } = req.params;
+
+    // verificar se o usuário é o dono da resposta
 
     try {
         const pergunta = await Pergunta.findById(id_pergunta);
-        const resposta = await pergunta.respostas.find({ _id: id }).deleteOne();
+        pergunta.respostas.id(id).deleteOne();
+        await pergunta.save();
         
-        return res.status(200).json({ result: resposta });
+        return res.status(200).json({ result: pergunta });
     } catch (error) {
         console.log(error);
         return res.status(400).json({ result: {error: error.message, time: Date.now()} });

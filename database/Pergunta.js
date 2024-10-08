@@ -1,5 +1,5 @@
 import { model, Schema, Types } from "mongoose";
-import { respostaSchema } from "./Resposta";
+import { respostaSchema } from "./Resposta.js";
 
 const perguntaSchema = new Schema({
     titulo: {
