@@ -2,6 +2,9 @@ import { Router } from "express";
 import { Pergunta } from "../database/Pergunta.js";
 import { tokenVerify } from "../middleware.js";
 import { respostaSchema } from "../database/Resposta.js";
+import jwt from "jsonwebtoken"
+import { config } from "dotenv";
+config();
 const pergunta = Router();
 
 // public routes
@@ -129,12 +132,18 @@ pergunta.post("/:id_pergunta/resposta", tokenVerify, async (req, res) => {
 pergunta.put("/:id_pergunta/resposta/:id", tokenVerify, async (req, res) => {
     const { id_pergunta, id } = req.params;
     const { resposta, explicacao } = req.body;
+    const idAutor = req.header.id;
+    
+    if (!idAutor) return res.status(400).json({ result: {error: error.message, time: Date.now()} });
 
-    // verificar se o usuário é o dono da resposta
-
-    try {
+    try {        
         const pergunta = await Pergunta.findById(id_pergunta);
-        const repostaAtualizada = pergunta.respostas.id(id).$set({
+        const respostaDaPergunta = pergunta.respostas.id(id);
+        
+        if (idAutor != respostaDaPergunta.autor)
+            return res.status(400).json({ result: {error: error.message, time: Date.now()} });  
+
+        const repostaAtualizada = respostaDaPergunta.$set({
             ...pergunta.respostas.id(id),
             resposta,
             explicacao
@@ -151,12 +160,18 @@ pergunta.put("/:id_pergunta/resposta/:id", tokenVerify, async (req, res) => {
 // Delete respostas
 pergunta.delete("/:id_pergunta/resposta/:id", tokenVerify, async (req, res) => {
     const { id_pergunta, id } = req.params;
+    const idAutor = req.header.id;
 
-    // verificar se o usuário é o dono da resposta
+    if (!idAutor) return res.status(400).json({ result: {error: error.message, time: Date.now()} });
 
     try {
         const pergunta = await Pergunta.findById(id_pergunta);
-        pergunta.respostas.id(id).deleteOne();
+        const respostaDaPergunta = pergunta.respostas.id(id);
+        
+        if (idAutor != respostaDaPergunta.autor)
+            return res.status(400).json({ result: {error: error.message, time: Date.now()} });
+
+        respostaDaPergunta.deleteOne();
         await pergunta.save();
         
         return res.status(200).json({ result: pergunta });

@@ -14,10 +14,12 @@ export const tokenVerify = (req, res, next) => {
     if (!token)
         return res.status(400).json({result: "Sem token"});
     
-    jwt.verify(token, process.env.SECRET, (err, id) => {
-        if (!err)
+    jwt.verify(token, process.env.SECRET, (err, data) => {
+        if (!err) {
+            req.header.id = data.id
             next();
-        else 
+        } else {
             return res.status(400).json({result: "token invalido"});
+        } 
     });
 }

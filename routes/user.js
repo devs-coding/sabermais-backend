@@ -43,15 +43,15 @@ user.post("/sigin", async (req, res) => {
 // rotas privatas abaixo
 
 user.get("/", tokenVerify, async (req, res) => {
-    const { id } = req.query;
 
     try {
-        const dataMyAccount = await User.findOne({ _id: id });
+        const dataMyAccount = await User.findOne({ _id: req.header.id });
         return res.status(200).json({ result: dataMyAccount });
     } catch (error) {
         console.log(error);
         return res.status(400).json({ result: {error: true, time: Date.now()} });
     }
+    
 })
 
 /**
