@@ -70,6 +70,10 @@ pergunta.delete("/:id", tokenVerify, async (req, res) => {
     const { id } = req.params;
 
     try {
+        const pergunta = await Pergunta.findById(id);
+        if (pergunta.autor != req.header.id)
+            return res.status(400).json({ result: {error: true, time: Date.now()} });
+
         const removido = await Pergunta.deleteOne({ _id: id });
         return res.status(200).json({ result: removido });
     } catch (error) {
@@ -83,6 +87,10 @@ pergunta.put('/:id', tokenVerify, async (req, res) => {
     const { titulo, texto, autor, pontos, date } = req.body;
 
     try {
+        const pergunta = await Pergunta.findById(perguntaId);
+        if (req.header.id != pergunta.autor)
+            return res.status(400).json({ result: {error: error.message, time: Date.now()} });
+
         // Encontrar a pergunta pelo ID e atualizar
         const perguntaAtualizada = await Pergunta.findByIdAndUpdate(
             perguntaId,
@@ -106,6 +114,16 @@ pergunta.put('/:id', tokenVerify, async (req, res) => {
         return res.status(400).json({ result: {error: error.message, time: Date.now()} });
     }
 });
+
+
+
+
+
+
+
+
+
+
 
 // Criar respostas
 pergunta.post("/:id_pergunta/resposta", tokenVerify, async (req, res) => {
@@ -139,7 +157,7 @@ pergunta.put("/:id_pergunta/resposta/:id", tokenVerify, async (req, res) => {
     try {        
         const pergunta = await Pergunta.findById(id_pergunta);
         const respostaDaPergunta = pergunta.respostas.id(id);
-        
+
         if (idAutor != respostaDaPergunta.autor)
             return res.status(400).json({ result: {error: error.message, time: Date.now()} });  
 

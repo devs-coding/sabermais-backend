@@ -20,6 +20,6 @@ export const tokenVerify = (req, res, next) => {
             next();
         } else {
             return res.status(400).json({result: "token invalido"});
-        } 
+        }
     });
 }
