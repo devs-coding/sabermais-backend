@@ -128,13 +128,13 @@ pergunta.put('/:id', tokenVerify, async (req, res) => {
 // Criar respostas
 pergunta.post("/:id_pergunta/resposta", tokenVerify, async (req, res) => {
     const { id_pergunta } = req.params;
-    const { resposta, explicacao, autor } = req.body;
+    const { resposta, explicacao } = req.body;
 
     try {
         const novaResposta = await Pergunta.findByIdAndUpdate(
             id_pergunta,
             {
-                $push: { respostas: { resposta, explicacao, autor } }
+                $push: { respostas: { resposta, explicacao, autor: req.header.id } }
             }
         );
 

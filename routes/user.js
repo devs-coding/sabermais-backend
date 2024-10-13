@@ -3,6 +3,8 @@ import { User } from "../database/User.js";
 import { compare } from "bcrypt";
 import jwt from "jsonwebtoken";
 import { tokenVerify } from "../middleware.js";
+import { Pergunta } from "../database/Pergunta.js";
+import { respostaSchema } from "../database/Resposta.js";
 const user = Router();
 
 user.post("/login", async (req, res) => {
@@ -54,17 +56,67 @@ user.get("/", tokenVerify, async (req, res) => {
     
 })
 
-/**
- * Criar uma pergunta (ROTA)
- * header: {
- *  authentication: token
- * }
- * body:
- *  pergunta: 
- *      titulo,
- *      pontos,
- *      respostas,
- *      
- */
+user.put("/", tokenVerify, async (req, res) => {
+    const {
+        nome,
+        curso,
+        urlImg
+    } = req.body;
+
+    try {
+
+        await User.findByIdAndUpdate(
+            req.header.id,
+            {
+                nome,
+                curso,
+                urlImg
+            }
+        );
+
+        const me = await User.findById(req.header.id);
+
+        return res.status(200).json({ result: me });
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ error: "não foi possível atualizar seus dados" });
+    }
+});
+
+user.delete("/", tokenVerify, async (req, res) => {
+    
+    try {
+        await User.findByIdAndDelete(req.header.id);
+
+        const user = await User.findById(req.header.id);
+        if (!user);
+            return res.status(200).json({ result: "usuário removido" });
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ error: "não foi possível remover usuário" });
+    }
+
+});
+
+// EM ANDAMENTO
+user.get("/contribuicoes", tokenVerify, async (req, res) => {
+    const idUser = req.header.id;
+    const contribuicoes = {};
+
+    try {
+        contribuicoes.qtdPerguntas = await Pergunta.find({autor: idUser}).countDocuments();
+
+        contribuicoes.qtdRespostas = await Pergunta.find({
+            "respostas.autor": idUser
+        }).countDocuments();
+    
+        return res.status(200).json({ result: contribuicoes });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ error: "error ao buscar contribuições" });
+    }
+})
 
 export { user };
