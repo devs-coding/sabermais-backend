@@ -1,10 +1,11 @@
-import { Router } from "express";
+import e, { Router } from "express";
 import { User } from "../database/User.js";
 import { compare } from "bcrypt";
 import jwt from "jsonwebtoken";
 import { tokenVerify } from "../middleware.js";
 import { Pergunta } from "../database/Pergunta.js";
 import { respostaSchema } from "../database/Resposta.js";
+import upload from "../multer.cjs"
 const user = Router();
 
 user.post("/login", async (req, res) => {
@@ -100,7 +101,6 @@ user.delete("/", tokenVerify, async (req, res) => {
 
 });
 
-// EM ANDAMENTO
 user.get("/contribuicoes", tokenVerify, async (req, res) => {
     const idUser = req.header.id;
     const contribuicoes = {};
@@ -117,6 +117,27 @@ user.get("/contribuicoes", tokenVerify, async (req, res) => {
         console.log(error);
         return res.status(400).json({ error: "error ao buscar contribuições" });
     }
-})
+});
+
+user.post("/img", tokenVerify, upload.single("arquivo"), async (req, res) => {
+    const file = req.file;
+    const id = req.header.id;
+
+    try {
+        await User.findByIdAndUpdate(
+            id,
+            {
+                urlImg: file.filename
+            }
+        );
+
+        const user = await User.findById(id);
+
+        return res.status(200).json({result: user});
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ error: "error passar imagem" });
+    }
+});
 
 export { user };

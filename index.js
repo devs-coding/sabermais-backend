@@ -7,9 +7,10 @@ config();
 
 const app = express();
 app.use(json());
+app.use(express.static('uploads/'));
 
 app.get("/", (req, res) => {
-    return res.json({ msg: "funcionando" })
+    return res.json({ msg: "funcionando" });
 });
 
 app.use("/user", user);
